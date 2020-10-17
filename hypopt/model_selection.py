@@ -20,7 +20,7 @@ import multiprocessing.pool
 SUPPRESS_WARNINGS = False
 
 # tqdm is a module used to print time-to-complete when multiprocessing is used.
-# This module is not necessary, and therefore is not a package dependency, but 
+# This module is not necessary, and therefore is not a package dependency, but
 # when installed it improves user experience for large datsets.
 try:
     import tqdm
@@ -48,7 +48,7 @@ class NoDaemonProcess(multiprocessing.Process):
 # because the latter is only a wrapper function, not a proper class.
 class MyPool(multiprocessing.pool.Pool):
     Process = NoDaemonProcess
-    
+
 # For python 2/3 compatibility, define pool context manager
 # to support the 'with' statement in Python 2
 if sys.version_info[0] == 2:
@@ -64,7 +64,7 @@ else:
 
 def _compute_score(model, X, y, scoring_metric = None, scoring_params = None):
     '''Helper function that maps metric string names to their function calls.
-    
+
     Parameters
     ----------
     model : class inheriting sklearn.base.BaseEstimator
@@ -75,25 +75,25 @@ def _compute_score(model, X, y, scoring_metric = None, scoring_params = None):
         sklearn model, everything will work out of the box. To use a model from a
         different library is no problem, but you need to wrap it in a class and
         inherit sklearn.base.BaseEstimator as seen in:
-        https://github.com/cgnorthcutt/hyperopt 
-        
+        https://github.com/cgnorthcutt/hyperopt
+
     X : np.array of shape (n, m)
         The training data.
 
     y : np.array of shape (n,) or (n, 1)
         Corresponding labels.
-        
+
     scoring_metric : str
-        See hypopt.GridSearch.fit() scoring parameter docstring 
+        See hypopt.GridSearch.fit() scoring parameter docstring
         for list of options.
-        
+
     scoring_params : dict
         All other params you want passed to the scoring function.
         Params will be passed as scoring_func(**scoring_params).'''
-    
+
     if scoring_params is None:
         scoring_params = {}
-    
+
     if scoring_metric == 'accuracy':
         return metrics.accuracy_score(y, model.predict(X), **scoring_params)
     elif scoring_metric == 'brier_score_loss':
@@ -137,31 +137,26 @@ def _run_thread_job(model_params):  # pragma: no cover
     try:
         # Seeding may be important for fair comparison of param settings.
         np.random.seed(seed = 0)
-        if hasattr(model, 'seed') and not callable(model.seed): 
+        if hasattr(model, 'seed') and not callable(model.seed):
             model.seed = 0
-        if hasattr(model, 'random_state') and not callable(model.random_state): 
+        if hasattr(model, 'random_state') and not callable(model.random_state):
             model.random_state = 0
-        model.set_params(**model_params)    
+        model.set_params(**model_params)
         model.fit(X_train, y_train)
         # Compute the score for the given parameters, scoring metric, and model.
         if scoring is None: # use default model.score() if it exists, else use accuracy
-            if hasattr(model, 'score'):        
+            if hasattr(model, 'score'):
                 score = model.score(X_val, y_val)
-            else:            
+            else:
                 score = metrics.accuracy_score(
                     y_val,
                     model.predict(X_val),
                 )
-        # Or you provided your own scoring class
-        elif type(scoring) in [metrics.scorer._PredictScorer, metrics.scorer._ProbaScorer] \
-            or metrics.scorer._PredictScorer in type(scoring).__bases__ \
-            or metrics.scorer._ProbaScorer in type(scoring).__bases__:
-            score = scoring(model, job_params["X_val"], job_params["y_val"])
         # You provided a string specifying the metric, e.g. 'accuracy'
         else:
             score = _compute_score(
                 model = model,
-                X = X_val, 
+                X = X_val,
                 y = y_val,
                 scoring_metric = scoring,
                 scoring_params = scoring_params,
@@ -228,10 +223,10 @@ class GridSearch(BaseEstimator):
         The model must have model.fit(X,y) and model.predict(X) defined. Although it can
         work without it, its best if you also define model.score(X,y) so you can decide
         the scoring function for deciding the best parameters. If you are using an
-        sklearn model, everything will work out of the box. To use a model from a 
+        sklearn model, everything will work out of the box. To use a model from a
         different library is no problem, but you need to wrap it in a class and
         inherit sklearn.base.BaseEstimator as seen in:
-        https://github.com/cgnorthcutt/hyperopt 
+        https://github.com/cgnorthcutt/hyperopt
 
     param_grid : dict
         The parameters to train with out on the validation set. Dictionary with
@@ -258,7 +253,7 @@ class GridSearch(BaseEstimator):
 
     def __init__(
         self,
-        model,        
+        model,
         param_grid,
         num_threads=None,
         seed=0,
@@ -311,23 +306,23 @@ class GridSearch(BaseEstimator):
 
         X_val : np.array of shape (n0, m)
             The validation data to optimize paramters with. If you do not provide this,
-            cross validation on the training set will be used. 
+            cross validation on the training set will be used.
 
         y_val : np.array of shape (n0,) or (n0, 1)
             The validation labels to optimize paramters with. If you do not provide this,
             cross validation on the training set will be used.
-            
+
         scoring : str or metrics.scorer._PredictScorer object
             If a str is passed in, it must be in ['accuracy', 'brier_score_loss',
             'f1', 'f1_micro', 'f1_macro', 'f1_weighted', 'neg_log_loss',
             'average_precision', precision', 'recall', 'roc_auc',
-            'explained_variance', 'neg_mean_absolute_error','neg_mean_squared_error', 
+            'explained_variance', 'neg_mean_absolute_error','neg_mean_squared_error',
             'neg_mean_squared_log_error','neg_median_absolute_error', 'r2']
             This includes every scoring metric available here:
             http://scikit-learn.org/stable/modules/model_evaluation.html#common-cases-predefined-values
-            If you'd like to create your own scoring function, create an object by passing 
+            If you'd like to create your own scoring function, create an object by passing
             your custom function into make_scorer() like this:
-            sklearn.metrics.make_scorer(your_custom_metric_scoring_function). 
+            sklearn.metrics.make_scorer(your_custom_metric_scoring_function).
             Then pass that object in as the value for this scoring parameter. See:
             http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
             If scoring is None, model.score() is used by default.
@@ -367,10 +362,10 @@ class GridSearch(BaseEstimator):
             self.model = models[np.argmax(scores)]
         else:
             model_cv = GridSearchCV(
-                estimator = self.model, 
+                estimator = self.model,
                 param_grid = self.param_grid,
                 scoring = scoring,
-                cv = self.cv_folds, 
+                cv = self.cv_folds,
                 n_jobs = self.num_threads,
                 return_train_score = False,
             )
@@ -439,12 +434,12 @@ class GridSearch(BaseEstimator):
             if hasattr(inspect, 'getfullargspec') and \
             'sample_weight' in inspect.getfullargspec(self.model.score).args or \
             hasattr(inspect, 'getargspec') and \
-            'sample_weight' in inspect.getargspec(self.model.score).args:  
+            'sample_weight' in inspect.getargspec(self.model.score).args:
                 return self.model.score(X, y, sample_weight=sample_weight)
             else:
                 return self.model.score(X, y)
         else:
-            return metrics.accuracy_score(y, self.model.predict(X), sample_weight=sample_weight) 
+            return metrics.accuracy_score(y, self.model.predict(X), sample_weight=sample_weight)
 
 
     def get_param_scores(self):
